@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Private datasets and generated outputs
+data/*
+!data/.gitkeep
+outputs/
+*.csv
+
+# Test and development files
+.pytest_cache/
+.coverage
+.vscode/
+
+# Operating system
+.DS_Store
+Thumbs.db
