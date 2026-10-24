@@ -37,23 +37,82 @@ from synthetic_generator import (
 )
 
 
+
 st.set_page_config(
-    page_title="Synthetic Customer Engine",
-    page_icon="🛍️",
+    page_title="InsightFlow",
+    page_icon="📊",
     layout="wide",
 )
 
-st.title("🛍️ Synthetic Customer Behavior & Data Augmentation Engine")
+st.markdown("""
+<style>
+/* Overall page */
+.stApp {
+    background: linear-gradient(135deg, #f7f4ff 0%, #eff6ff 55%, #ecfdf5 100%);
+}
 
-st.write(
-    "Analyze customer behavior, discover customer groups, "
-    "and identify unusual or underrepresented patterns."
+/* Main content spacing */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
+}
+
+/* Headings */
+h1 {
+    color: #4338ca !important;
+    font-weight: 800 !important;
+    letter-spacing: -1px;
+}
+
+h2, h3 {
+    color: #3730a3 !important;
+}
+
+/* Cards and bordered containers */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid #e4ddff;
+    border-radius: 18px;
+    padding: 8px;
+    box-shadow: 0 5px 18px rgba(79, 70, 229, 0.07);
+}
+
+/* Buttons */
+.stButton > button,
+.stDownloadButton > button {
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #7c3aed, #4f46e5);
+    color: white;
+    font-weight: 600;
+    padding: 0.55rem 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background: linear-gradient(90deg, #6d28d9, #4338ca);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Subtle dividers */
+hr {
+    border-color: #ddd6fe;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.title("PersonaPulse")
+st.markdown(
+    "### Understand customers. Discover patterns. Create better data."
+)
+st.caption(
+    "An interactive workspace for customer behaviour analysis, "
+    "synthetic data generation, and data quality evaluation."
 )
 
-st.info(
-    "Milestone 4 adds customer behavior analysis. "
-    "Synthetic data generation and GenAI will be added later."
-)
 
 st.header("1. Choose your dataset")
 
