@@ -14,6 +14,11 @@ from data_loader import (
     get_dataset_summary,
     load_customer_csv,
 )
+from quality_evaluator import (
+    compare_numeric_statistics,
+    compare_categorical_distributions,
+    calculate_quality_summary,
+)
 
 from data_analysis import (
     cluster_customers,
@@ -564,6 +569,111 @@ if df is not None:
             mime="text/csv",
             key="download_synthetic_customers",
         )
+        
+        st.divider()
+        st.header("8. Synthetic data quality evaluation")
+
+        numeric_comparison = compare_numeric_statistics(
+            df, generated_df
+        )
+
+        categorical_comparisons = compare_categorical_distributions(
+            df, generated_df
+        )
+
+        quality_summary = calculate_quality_summary(
+            numeric_comparison
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric(
+                "Numerical columns compared",
+                quality_summary["columns_compared"],
+            )
+
+        with col2:
+            mean_difference = quality_summary[
+                "average_mean_difference_pct"
+            ]
+
+            st.metric(
+                "Average mean difference",
+                (
+                    f"{mean_difference:.2f}%"
+                    if mean_difference is not None
+                    else "Not available"
+                ),
+            )
+
+        st.caption(
+            "These statistics describe similarity between the datasets. "
+            "They do not prove that the synthetic data is fully realistic "
+            "or privacy-safe."
+        )
+
+        if not numeric_comparison.empty:
+            st.subheader("Numerical statistics comparison")
+
+            st.dataframe(
+                numeric_comparison.round(3),
+                use_container_width=True,
+            )
+
+            import plotly.express as px
+
+            mean_chart_data = numeric_comparison[
+                ["Column", "Original Mean", "Synthetic Mean"]
+            ].melt(
+                id_vars="Column",
+                var_name="Dataset",
+                value_name="Mean",
+            )
+
+            mean_fig = px.bar(
+                mean_chart_data,
+                x="Column",
+                y="Mean",
+                color="Dataset",
+                barmode="group",
+                title="Original vs Synthetic Means",
+            )
+
+            st.plotly_chart(mean_fig, use_container_width=True)
+
+        if categorical_comparisons:
+            st.subheader("Categorical distribution comparison")
+
+            for column, comparison in categorical_comparisons.items():
+                with st.expander(f"{column} distribution"):
+                    st.dataframe(
+                        comparison.round(2),
+                        use_container_width=True,
+                    )
+
+                    category_chart_data = comparison.melt(
+                        id_vars="Category",
+                        value_vars=["Original (%)", "Synthetic (%)"],
+                        var_name="Dataset",
+                        value_name="Percentage",
+                    )
+
+                    category_fig = px.bar(
+                        category_chart_data,
+                        x="Category",
+                        y="Percentage",
+                        color="Dataset",
+                        barmode="group",
+                        title=f"{column}: Original vs Synthetic",
+                    )
+
+                    st.plotly_chart(
+                        category_fig,
+                        use_container_width=True,
+                    )
+
+
 
     
     st.header("7. Download dataset")
