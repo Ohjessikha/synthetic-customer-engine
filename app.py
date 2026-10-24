@@ -25,6 +25,10 @@ from data_analysis import (
     get_numeric_summary,
     get_underrepresented_categories,
 )
+from synthetic_generator import (
+    generate_synthetic_customers,
+    get_generation_columns,
+)
 
 
 st.set_page_config(
@@ -420,6 +424,148 @@ if df is not None:
         )
 
     st.divider()
+    
+    st.divider()
+    st.header("7. Generate synthetic customers")
+
+    generation_columns = get_generation_columns(df)
+
+    number_to_generate = st.slider(
+        "Number of synthetic records",
+        min_value=10,
+        max_value=1000,
+        value=100,
+        step=10,
+    )
+
+    generation_conditions = {}
+
+    segment_column = generation_columns["segment"]
+
+    if segment_column:
+        segment_options = sorted(
+            df[segment_column]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        selected_segment = st.selectbox(
+            "Customer segment",
+            ["Any segment"] + segment_options,
+        )
+
+        if selected_segment != "Any segment":
+            generation_conditions["segment"] = selected_segment
+
+    spending_column = generation_columns["spending"]
+
+    if spending_column:
+        spending_values = pd.to_numeric(
+            df[spending_column], errors="coerce"
+        ).dropna()
+
+        if not spending_values.empty:
+            spending_min = float(spending_values.min())
+            spending_max = float(spending_values.max())
+
+            if spending_min < spending_max:
+                min_spending, max_spending = st.slider(
+                    "Total spending range",
+                    min_value=spending_min,
+                    max_value=spending_max,
+                    value=(spending_min, spending_max),
+                )
+
+                generation_conditions["min_spending"] = min_spending
+                generation_conditions["max_spending"] = max_spending
+
+    frequency_column = generation_columns["frequency"]
+
+    if frequency_column:
+        frequency_values = pd.to_numeric(
+            df[frequency_column], errors="coerce"
+        ).dropna()
+
+        if not frequency_values.empty:
+            frequency_min = int(frequency_values.min())
+            frequency_max = int(frequency_values.max())
+
+            if frequency_min < frequency_max:
+                min_frequency, max_frequency = st.slider(
+                    "Purchase frequency range",
+                    min_value=frequency_min,
+                    max_value=frequency_max,
+                    value=(frequency_min, frequency_max),
+                )
+
+                generation_conditions["min_frequency"] = min_frequency
+                generation_conditions["max_frequency"] = max_frequency
+
+    st.caption(
+        "Available controls depend on the column names in your dataset. "
+        "Generation uses a statistical baseline, not a trained "
+        "generative model, and does not guarantee privacy."
+    )
+
+    if st.button("Generate synthetic customers"):
+        try:
+            with st.spinner("Generating synthetic customer records..."):
+                generated_df, generation_method, generation_note = (
+                    generate_synthetic_customers(
+                        original_df=df,
+                        number_of_rows=number_to_generate,
+                        conditions=generation_conditions,
+                    )
+                )
+
+            st.session_state["synthetic_df"] = generated_df
+            st.session_state["synthetic_method"] = generation_method
+            st.session_state["synthetic_note"] = generation_note
+
+            st.success("Synthetic data generation finished.")
+
+        except ValueError as exc:
+            st.error(str(exc))
+
+        except Exception:
+            st.error(
+                "Synthetic generation failed. "
+                "Check the dataset and try again."
+            )
+
+    if "synthetic_df" in st.session_state:
+        generated_df = st.session_state["synthetic_df"]
+
+        st.subheader("Generated synthetic dataset")
+
+        st.write(
+            f"Generation method: "
+            f"**{st.session_state['synthetic_method']}**"
+        )
+
+        st.info(st.session_state["synthetic_note"])
+
+        st.metric(
+            "Synthetic records generated",
+            len(generated_df),
+        )
+
+        st.dataframe(
+            generated_df.head(50),
+            use_container_width=True,
+        )
+
+        st.download_button(
+            "Download synthetic customers as CSV",
+            data=generated_df.to_csv(index=False).encode("utf-8"),
+            file_name="synthetic_customers.csv",
+            mime="text/csv",
+            key="download_synthetic_customers",
+        )
+
+    
     st.header("7. Download dataset")
 
     st.download_button(
